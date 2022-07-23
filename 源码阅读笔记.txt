@@ -1,3 +1,80 @@
 2022年7月17日：
     我在我的github远程仓库中复刻了gnuradio的原始代码仓库，并将该复刻仓库克隆到了本地。
     接下来要做的，一是在本地阅读和试验源码并写下源码阅读笔记，二是将本地的工作同步到我的远程复刻仓库中去。
+
+
+2022年7月20日：
+    阅读完./VERSIONING，了解了gnuradio的版本命名规则。
+    阅读了./README.md，了解了gnuradio的基本用途和基本安装方法。
+    阅读了./DCO.txt，了解了软件开源的有关法律保护条款。
+    阅读了./COPYING，了解了GPL3授权的有关条款。
+    阅读了./CONTRIBUTING.md，了解了gnuradio的代码开发和提交规范等有关如何参与开发的信息。
+    阅读了./CODE_OF_CONDUCT.md，了解了gnuradio社区的行为准则。
+    阅读了./.readthedocs.yaml，了解了gnuradio项目文档的构建方法。
+
+    阅读了./config.h.in，了解了gnuradio项目的一些全局宏定义，后续碰到这些宏可以定位到该文件原始出处。
+
+    ./CHANGELOG.md文件的篇幅太长，且目前还未了解gnuradio的整体框架，不易最终该项目的改动历史，留到以后再研究。
+
+    ./CMakeLists.txt文件的篇幅太长，且目前未掌握CMake的语法使用，留到以后再研究。
+    ./CMakeLists.txt文件的解读
+    （1）检查源码目录和编译二进制目录是否相同，若相同则给出警告提示；设置build选项为release。
+    （2）工程设置：
+        cmake的最低版本为3.8版；
+        工程名：gnuradio
+        语言：CXX C
+        工程开启测试；
+        设置build共享库；
+    （3）......
+        ...... 
+        ......
+    
+
+    阅读了文件gnuradio-runtime/include/gnuradio/gr_complex.h
+    该文件做了2件事：
+        （1）类型定义了gr_complex为float精度的复数类型，
+            类型定义了gr_complexd为double精度的复数类型。
+        （2）提供了7个判断参数类型是否为复数的同名不同参内联函数is_complex，其中：
+            认定gr_complex类型和gr_complexd类型的参数是复数，
+            认定float、double、int、char、short类型的参数不是复数。
+    
+    阅读了文件gnuradio-runtime/include/gnuradio/attributes.h
+    该文件做了4件事：
+        （1）针对不同平台的不同编译器，定义了gunradio项目的跨平台编译属性宏定义，
+            这里阅读源码使用的是GCC编译器
+            #elif defined __GNUC__
+            #define __GR_ATTR_ALIGNED(x) __attribute__((aligned(x)))
+            #define __GR_ATTR_UNUSED __attribute__((unused))
+            #define __GR_ATTR_INLINE __attribute__((always_inline))
+            #define __GR_ATTR_DEPRECATED __attribute__((deprecated))
+            #define __GR_ATTR_EXPORT __attribute__((visibility("default")))
+            #define __GR_ATTR_IMPORT __attribute__((visibility("default")))
+        （2）针对C语言编译定义了内联宏定义，
+            这里阅读源码使用的是C++语言编译，内联是C++语言的关键字，是内置功能，所以不会被定义为宏。
+        （3）针对微软MSC编译器的某些警告进行了屏蔽，
+            这里阅读源码使用的是GCC编译器，不会做这些动作。
+        （4）微软MSC编译器时，申请缓冲区空间的宏定义为
+                #define __GR_VLA(TYPE, buf, size) TYPE* buf = (TYPE*)alloca(sizeof(TYPE) * (size))
+            其他编译器时，申请缓冲区空间的宏定义为
+                #define __GR_VLA(TYPE, buf, size) TYPE buf[size]
+            通过搜索整个gnuradio工程发现，实际上用该宏定义申请缓冲区空间的例子只有一处，几乎不被使用，不必关注。
+    
+    阅读了文件gnuradio-runtime/include/gnuradio/api.h
+    该文件做了2件事：
+        （1）包含了文件gnuradio-runtime/include/gnuradio/attributes.h的属性宏定义。
+        （2）条件定义宏GR_RUNTIME_API为上面文件的一个属性宏定义__GR_ATTR_EXPORT或__GR_ATTR_imPORT
+    
+    阅读了文件gnuradio-runtime/include/gnuradio/types.h
+    该文件做了1件事：
+        （1）类型定义了6种向量，其中包括：
+            2种整形向量gr_vector_int、gr_vector_uint;
+            2种浮点向量gr_vector_float、gr_vector_double;
+            2种void指针向量gr_vector_void_star、gr_vector_const_void_star。
+    
+    阅读了gr-filter/include/gnuradio/filter/fir_filter.h
+    该文件做了2件事：
+        （1）在gr/filter/kernel的命名空间中，定义了fir_filter的类模板。
+        （2）用6种不同的模板类型参数组合特例化了fir_filter类模板，如
+            typedef fir_filter<float, float, float> fir_filter_fff;
+            其他还包括：fir_filter_fff、fir_filter_ccf、fir_filter_fcc、fir_filter_ccc、fir_filter_scc、fir_filter_fsf，
+            其中s指的是std::int16_t，即short的意思。
