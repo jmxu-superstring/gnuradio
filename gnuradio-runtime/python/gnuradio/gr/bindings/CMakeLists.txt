@@ -4,12 +4,14 @@ include(GrPybind)
 # Python Bindings
 ########################################################################
 
-list(APPEND gr_python_files
-messages/msg_accepter_msgq_python.cc
-messages/msg_accepter_python.cc
-messages/msg_passing_python.cc
-messages/msg_producer_python.cc
-messages/msg_queue_python.cc
+list(
+    APPEND
+    gr_python_files
+    messages/msg_accepter_msgq_python.cc
+    messages/msg_accepter_python.cc
+    messages/msg_passing_python.cc
+    messages/msg_producer_python.cc
+    messages/msg_queue_python.cc
     # attributes_python.cc
     basic_block_python.cc
     block_python.cc
@@ -20,6 +22,7 @@ messages/msg_queue_python.cc
     buffer_reader_python.cc
     buffer_type_python.cc
     constants_python.cc
+    dictionary_logger_backend_python.cc
     endianness_python.cc
     expj_python.cc
     flowgraph_python.cc
@@ -32,7 +35,6 @@ messages/msg_queue_python.cc
     io_signature_python.cc
     logger_python.cc
     math_python.cc
-
     message_python.cc
     msg_accepter_python.cc
     # msg_accepter_msgq_python.cc
@@ -83,9 +85,9 @@ messages/msg_queue_python.cc
     # xoroshiro128p_python.cc
     python_bindings.cc)
 
-GR_PYBIND_MAKE_CHECK_HASH(gr
-   ../../../..
-   gr::gr
-   "${gr_python_files}")
+gr_pybind_make_check_hash(gr ../../../.. gr::gr "${gr_python_files}")
 
-install(TARGETS gr_python DESTINATION ${GR_PYTHON_DIR}/gnuradio/gr COMPONENT pythonapi)
+install(
+    TARGETS gr_python
+    DESTINATION ${GR_PYTHON_DIR}/gnuradio/gr
+    COMPONENT pythonapi)

@@ -242,9 +242,9 @@ int fmcomms2_source_impl<gr_complex>::work(int noutput_items,
         // }
 
         volk_16i_s32f_convert_32f(
-            d_float_rvec.data(), d_device_bufs[i].data(), 2048.0, noutput_items);
+            d_float_rvec.data(), d_device_bufs[i * 2].data(), 2048.0, noutput_items);
         volk_16i_s32f_convert_32f(
-            d_float_ivec.data(), d_device_bufs[i + 1].data(), 2048.0, noutput_items);
+            d_float_ivec.data(), d_device_bufs[i * 2 + 1].data(), 2048.0, noutput_items);
 
         volk_32f_x2_interleave_32fc(
             out, d_float_rvec.data(), d_float_ivec.data(), noutput_items);
@@ -343,7 +343,7 @@ void fmcomms2_source_impl<T>::set_gain_mode(size_t chan, const std::string& mode
     iio_param_vec_t params;
 
     params.emplace_back("in_voltage" + std::to_string(chan) +
-                        "_gain_control_mode=" + d_gain_mode[chan]);
+                        "_gain_control_mode=" + mode);
 
     device_source_impl::set_params(params);
     d_gain_mode[chan] = mode;

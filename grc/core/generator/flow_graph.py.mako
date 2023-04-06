@@ -21,23 +21,14 @@
 # GNU Radio version: ${version}
 ##################################################
 
-% if generate_options == 'qt_gui':
-from packaging.version import Version as StrictVersion
-
-if __name__ == '__main__':
-    import ctypes
-    import sys
-    if sys.platform.startswith('linux'):
-        try:
-            x11 = ctypes.cdll.LoadLibrary('libX11.so')
-            x11.XInitThreads()
-        except:
-            print("Warning: failed to XInitThreads()")
-
-% endif
 ########################################################
 ##Create Imports
 ########################################################
+% if generate_options == 'qt_gui':
+from packaging.version import Version as StrictVersion
+from PyQt5 import Qt
+from gnuradio import qtgui
+%endif
 % for imp in imports:
 ##${imp.replace("  # grc-generated hier_block", "")}
 ${imp}
@@ -55,7 +46,7 @@ ${indent(snip['def'])}
 % endfor
 \
 <%
-snippet_sections = ['main_after_init', 'main_after_start', 'main_after_stop']
+snippet_sections = ['main_after_init', 'main_after_start', 'main_after_stop', 'init_before_blocks']
 snippets = {}
 for section in snippet_sections:
     snippets[section] = flow_graph.get_snippets_dict(section)
@@ -82,8 +73,6 @@ def snippets_${section}(tb):
     param_str = ', '.join(['self'] + ['%s=%s'%(param.name, param.templates.render('make')) for param in parameters])
 %>\
 % if generate_options == 'qt_gui':
-from gnuradio import qtgui
-
 class ${class_name}(gr.top_block, Qt.QWidget):
 
     def __init__(${param_str}):
@@ -93,8 +82,8 @@ class ${class_name}(gr.top_block, Qt.QWidget):
         qtgui.util.check_set_qss()
         try:
             self.setWindowIcon(Qt.QIcon.fromTheme('gnuradio-grc'))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not set Icon: {str(exc)}", file=sys.stderr)
         self.top_scroll_layout = Qt.QVBoxLayout()
         self.setLayout(self.top_scroll_layout)
         self.top_scroll = Qt.QScrollArea()
@@ -114,8 +103,8 @@ class ${class_name}(gr.top_block, Qt.QWidget):
                 self.restoreGeometry(self.settings.value("geometry").toByteArray())
             else:
                 self.restoreGeometry(self.settings.value("geometry"))
-        except:
-            pass
+        except BaseException as exc:
+            print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 % elif generate_options == 'bokeh_gui':
 
 class ${class_name}(gr.top_block):
@@ -205,6 +194,7 @@ gr.io_signature.makev(${len(io_sigs)}, ${len(io_sigs)}, [${', '.join(size_strs)}
         # Blocks
         ${'##################################################'}
         % endif
+        ${'snippets_init_before_blocks(self)' if snippets['init_before_blocks'] else ''}
         % for blk, blk_make in blocks:
         % if blk_make:
         ${ indent(blk_make.strip('\n')) }
@@ -255,7 +245,7 @@ gr.io_signature.makev(${len(io_sigs)}, ${len(io_sigs)}, [${', '.join(size_strs)}
             with open(filename) as ss:
                 self.setStyleSheet(ss.read())
         except Exception as e:
-            print(e, file=sys.stderr)
+            self.logger.error(f"setting stylesheet: {str(e)}")
     % endif
 % endif
 ##
@@ -337,7 +327,7 @@ def main(top_block_cls=${class_name}, options=None):
     % endif
     % if flow_graph.get_option('realtime_scheduling'):
     if gr.enable_realtime_scheduling() != gr.RT_OK:
-        print("Error: failed to enable real-time scheduling.")
+        gr.logger("realtime").warning("Error: failed to enable real-time scheduling.")
     % endif
     % if generate_options == 'qt_gui':
 
@@ -385,7 +375,7 @@ def main(top_block_cls=${class_name}, options=None):
         ${'snippets_main_after_start(tb)' if snippets['main_after_start'] else ''}
         bokehgui.utils.run_server(tb, sizing_mode = "${flow_graph.get_option('sizing_mode')}",  widget_placement =  ${flow_graph.get_option('placement')}, window_size =  ${flow_graph.get_option('window_size')})
     finally:
-        print("Exiting the simulation. Stopping Bokeh Server")
+        tb.logger.info("Exiting the simulation. Stopping Bokeh Server")
         tb.stop()
         tb.wait()
         ${'snippets_main_after_stop(tb)' if snippets['main_after_stop'] else ''}
