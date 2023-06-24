@@ -34,6 +34,10 @@ gr_python_install(
           "${CMAKE_CURRENT_BINARY_DIR}/util.py"
     DESTINATION ${GR_PYTHON_DIR}/gnuradio/qtgui)
 
+if(ENABLE_GR_QTGUI_OPENGL)
+    gr_python_install(FILES fosphorgl_sink.py DESTINATION ${GR_PYTHON_DIR}/gnuradio/qtgui)
+endif(ENABLE_GR_QTGUI_OPENGL)
+
 ########################################################################
 # Handle the unit tests
 ########################################################################
@@ -54,6 +58,9 @@ if(ENABLE_TESTING)
     file(GLOB py_qa_test_files "qa_*.py")
     foreach(py_qa_test_file ${py_qa_test_files})
         get_filename_component(py_qa_test_name ${py_qa_test_file} NAME_WE)
+        if(NOT ENABLE_GR_QTGUI_OPENGL AND py_qa_test_name STREQUAL "qa_qtgui_opengl")
+            continue()
+        endif()
         if(CMAKE_CROSSCOMPILING)
             get_filename_component(py_qa_test_file ${py_qa_test_file} NAME)
         endif(CMAKE_CROSSCOMPILING)

@@ -38,6 +38,38 @@ constellation_soft_decoder_cf_impl::constellation_soft_decoder_cf_impl(
 
 constellation_soft_decoder_cf_impl::~constellation_soft_decoder_cf_impl() {}
 
+
+void constellation_soft_decoder_cf_impl::set_constellation(
+    constellation_sptr new_constellation)
+{
+    if (new_constellation->dimensionality() != d_dim) {
+        d_logger->warn("Attempting to change to a new dimensionality constellation (from "
+                       "{} to {}). This may cause buffering issues.",
+                       d_dim,
+                       new_constellation->dimensionality());
+    }
+    if (new_constellation->bits_per_symbol() != d_bps) {
+        if (!d_warned_bps) {
+            d_logger->warn(
+                "Attempting to change to a constellation with different number of "
+                "bits per symbol (from {} to {}). This may cause buffering issues. This "
+                "warning is raised only once.",
+                d_bps,
+                new_constellation->bits_per_symbol());
+            d_warned_bps = true;
+        }
+    }
+
+    gr::thread::scoped_lock l(d_mutex);
+
+    d_constellation = new_constellation;
+    d_dim = d_constellation->dimensionality();
+    d_bps = d_constellation->bits_per_symbol();
+    set_interpolation(d_bps);
+    // set_relative_rate((uint64_t)d_dim, (uint64_t)d_bps); // For when d_dim is properly
+    // managed
+}
+
 int constellation_soft_decoder_cf_impl::work(int noutput_items,
                                              gr_vector_const_void_star& input_items,
                                              gr_vector_void_star& output_items)
@@ -47,8 +79,10 @@ int constellation_soft_decoder_cf_impl::work(int noutput_items,
 
     std::vector<float> bits;
 
+    gr::thread::scoped_lock l(d_mutex);
+
     // FIXME: figure out how to manage d_dim
-    for (int i = 0; i < noutput_items / d_bps; i++) {
+    for (unsigned int i = 0; i < noutput_items / d_bps; i++) {
         bits = d_constellation->soft_decision_maker(in[i]);
         for (size_t j = 0; j < bits.size(); j++) {
             out[d_bps * i + j] = bits[j];
