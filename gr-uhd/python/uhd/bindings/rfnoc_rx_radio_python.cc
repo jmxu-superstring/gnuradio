@@ -14,7 +14,7 @@
 /* BINDTOOL_GEN_AUTOMATIC(0)                                                       */
 /* BINDTOOL_USE_PYGCCXML(0)                                                        */
 /* BINDTOOL_HEADER_FILE(rfnoc_rx_radio.h)                                        */
-/* BINDTOOL_HEADER_FILE_HASH(635a84f92d7ce031bcbe6bd4756ad28e)                     */
+/* BINDTOOL_HEADER_FILE_HASH(ef7d37e4745559da339f8ce31e901adf)                     */
 /***********************************************************************************/
 
 #include <pybind11/complex.h>
@@ -166,6 +166,22 @@ void bind_rfnoc_rx_radio(py::module& m)
              py::arg("correction"),
              py::arg("chan"),
              D(rfnoc_rx_radio, set_iq_balance, 1))
+
+
+        .def("issue_stream_cmd",
+             (void(rfnoc_rx_radio::*)(const ::uhd::stream_cmd_t&, const size_t)) &
+                 rfnoc_rx_radio::issue_stream_cmd,
+             py::arg("cmd"),
+             py::arg("chan"),
+             D(rfnoc_rx_radio, issue_stream_cmd))
+
+
+        .def("enable_rx_timestamps",
+             (void(rfnoc_rx_radio::*)(const bool, const size_t)) &
+                 rfnoc_rx_radio::enable_rx_timestamps,
+             py::arg("enable"),
+             py::arg("chan"),
+             D(rfnoc_rx_radio, enable_rx_timestamps))
 
         ;
 }
